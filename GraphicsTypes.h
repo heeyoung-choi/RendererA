@@ -1,0 +1,16 @@
+#pragma once
+#include <DirectXMath.h>
+
+struct Vertex
+{
+    float x, y, z;    // Position
+    float r, g, b;    // Color
+    float nx, ny, nz; // Normal
+};
+
+struct ConstantBuffer
+{
+    DirectX::XMMATRIX world;
+    DirectX::XMMATRIX view;
+    DirectX::XMMATRIX projection;
+};
