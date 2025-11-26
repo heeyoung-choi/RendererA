@@ -297,7 +297,8 @@ void Renderer::RenderFrame()
 	//rotate overtime 
 	static float t = 0.0f;
 	t += 0.01f;
-	XMMATRIX world = XMMatrixRotationY(t);
+	XMMATRIX scale_mat = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	XMMATRIX world = XMMatrixRotationY(t) * scale_mat;
 	// 2. View: The "Camera"
 	// Eye: Where the camera is (0, 1, -2) -> Back 2 units, up 1 unit
 	// At:  What it is looking at (0, 0, 0) -> The center of the world
