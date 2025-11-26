@@ -6,7 +6,7 @@
 // -----------------------------------------------------------------------------
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	Window window(800, 600);
+	Window window(1000, 1000);
     MSG msg = { 0 };
     while (msg.message != WM_QUIT)
     {

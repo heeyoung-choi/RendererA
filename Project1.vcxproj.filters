@@ -35,8 +35,14 @@
     <ClInclude Include="GraphicsTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tiny_object_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders_1.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

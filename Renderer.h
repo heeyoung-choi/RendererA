@@ -2,6 +2,7 @@
 #include <d3d11.h>
 #include "GraphicsTypes.h"
 #include <vector>
+#include <string>
 // Link the Direct3D library automatically
 // (Alternatively, you can add d3d11.lib in Project Properties -> Linker -> Input)
 using namespace DirectX;
@@ -28,6 +29,7 @@ public:
 		if (g_pDevice)       g_pDevice->Release();
 
 	}
+private:
 	HRESULT InitD3D(HWND hWnd, int height, int width);
 	// Helper to set up Device, SwapChain, RTV, and Viewport
 	HRESULT InitPipeline(HWND hWnd, int width, int height);
@@ -38,6 +40,7 @@ public:
 	// Helper to compile and create shaders and input layout
 	HRESULT InitShaders();
 	void RenderFrame();
+	bool ImportModel(const std::string& fileName, const std::string& searchPath);
 private:
 	ID3D11Device* g_pDevice;        // The Resource Manager
 	ID3D11DeviceContext* g_pContext;       // The Artist
@@ -48,49 +51,12 @@ private:
 	ID3D11Buffer* g_pIndexBuffer;
 	ID3D11DepthStencilView* g_pDSV; // depth canvas
 
+    
+
 	ID3D11VertexShader* g_pVertexShader;
 	ID3D11PixelShader* g_pPixelShader;
 	ID3D11InputLayout* g_pInputLayout;
-
-	std::vector<Vertex> vertices =
-	{
-		// x, y, z                        // r, g, b
-		// FRONT FACE
-		{ -0.33f, -0.33f, -0.33f,    1.0f, 0.0f, 0.0f }, // Bottom-Left (Red)
-		{ -0.33f,  0.33f, -0.33f,    0.0f, 1.0f, 0.0f }, // Top-Left (Green)
-		{  0.33f,  0.33f, -0.33f,    0.0f, 0.0f, 1.0f }, // Top-Right (Blue)
-		{  0.33f, -0.33f, -0.33f,    1.0f, 1.0f, 0.0f }, // Bottom-Right (Yellow)
-
-		// BACK FACE
-		{ -0.33f, -0.33f,  0.33f,    0.0f, 1.0f, 1.0f }, // Bottom-Left (Cyan)
-		{ -0.33f,  0.33f,  0.33f,    1.0f, 0.0f, 1.0f }, // Top-Left (Magenta)
-		{  0.33f,  0.33f,  0.33f,    1.0f, 1.0f, 1.0f }, // Top-Right (White)
-		{  0.33f, -0.33f,  0.33f,    0.0f, 0.0f, 0.0f }  // Bottom-Right (Black)
-	};
-	std::vector<unsigned short> indices = {
-		// Front Face
-		0, 1, 2,
-		0, 2, 3,
-
-		// Back Face
-		4, 6, 5,
-		4, 7, 6,
-
-		// Left Face
-		4, 5, 1,
-		4, 1, 0,
-
-		// Right Face
-		3, 2, 6,
-		3, 6, 7,
-
-		// Top Face
-		1, 5, 6,
-		1, 6, 2,
-
-		// Bottom Face
-		4, 0, 3,
-		4, 3, 7
-	};
+    std::vector<Vertex> vertices;
+    std::vector<unsigned short> indices;
 	
 };

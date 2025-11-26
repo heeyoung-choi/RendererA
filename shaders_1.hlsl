@@ -16,6 +16,7 @@ struct VS_INPUT
 {
     float3 pos : POSITION; // Matches the C++ Input Layout
     float3 color : COLOR; // Matches the C++ Input Layout
+    float3 normal : NORMAL; // Matches the C++ Input Layout
 };
 
 // Output from Vertex Shader -> Input to Pixel Shader
@@ -23,6 +24,7 @@ struct PS_INPUT
 {
     float4 pos : SV_POSITION; // System Value Position
     float4 color : COLOR; // Pass through color (not used in this example)
+    float3 normal : TEXCOORD0;
 };
 
 
@@ -45,6 +47,8 @@ PS_INPUT VSMain(VS_INPUT input)
     output.pos = mul(output.pos, view);
     output.pos = mul(output.pos, projection);
     
+    output.normal = mul(input.normal, (float3x3) world); // Transform normal (ignore translation))
+    
     output.color = float4(input.color, 1.0f);
     
     return output;
@@ -57,6 +61,19 @@ PS_INPUT VSMain(VS_INPUT input)
 // =================================================================================
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
-    // Return bright YELLOW
-    return input.color;
+    // 1. Setup a Light Direction (e.g., Light coming from top-left-front)
+    float3 lightDir = normalize(float3(-1.0f, -1.0f, 0.0f));
+
+    // 2. Calculate Lighting (Dot Product)
+    // "How much is the normal pointing at the light?"
+    // saturate() keeps the number between 0.0 (dark) and 1.0 (bright)
+    float lightIntensity = (dot(normalize(input.normal), -lightDir));
+
+    // 3. Add a little "Ambient" light so the dark side isn't pitch black
+    lightIntensity = lightIntensity + 0.8f;
+
+    // 4. Multiply Base Color by Light
+    float3 finalColor = input.color * lightIntensity;
+
+    return float4(finalColor, 1.0f);
 }

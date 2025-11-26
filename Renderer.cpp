@@ -1,5 +1,7 @@
+#define TINYOBJLOADER_IMPLEMENTATION
 #include "Renderer.h"
 #include <d3dcompiler.h>
+#include "tiny_object_loader.h"
 #pragma comment(lib, "d3dcompiler.lib")
 
 Renderer::Renderer()
@@ -144,7 +146,7 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 
 HRESULT Renderer::InitGraphics()
 {
-	
+	ImportModel("shape.obj", "./");
 
 	// Define indices to build a hexagon from 6 triangles
 	 
@@ -231,11 +233,14 @@ HRESULT Renderer::InitShaders()
 	// This is the bridge map between C++ Vertex struct and HLSL VS_INPUT struct.
 	D3D11_INPUT_ELEMENT_DESC ied[] =
 	{
-		// 1. Position (0 bytes offset)
+		// 1. Position (Offset 0)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
-		// 2. Color (Starts after the first 3 floats, so offset = 12 bytes)
+		// 2. Color (Offset 12 - after 3 floats)
 		{ "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+		// 3. Normal (Offset 24 - after Pos(12) + Col(12))
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	// We need the VS signature (bytecode) to validate the layout
@@ -297,13 +302,13 @@ void Renderer::RenderFrame()
 	// Eye: Where the camera is (0, 1, -2) -> Back 2 units, up 1 unit
 	// At:  What it is looking at (0, 0, 0) -> The center of the world
 	// Up:  Which way is "up" (0, 1, 0) -> Y-axis is up
-	XMVECTOR eye = XMVectorSet(0.0f, 1.0f, -2.0f, 0.0f);
+	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
 	XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX view = XMMatrixLookAtLH(eye, at, up);
 
 	// FOV (45 degrees), Aspect Ratio (800/600), Near Z (0.1), Far Z (100)
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 800.0f / 600.0f, 0.1f, 100.0f);
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1000.0f / 1000.0f, 0.1f, 100.0f);
 
 	// C. PREPARE DATA FOR GPU
 	// Important: We must TRANSPOSE matrices because HLSL stores them differently than C++
@@ -351,3 +356,50 @@ void Renderer::RenderFrame()
 	// 2. Present (same as before)
 	g_pSwapChain->Present(1, 0);
 }
+
+bool Renderer::ImportModel(const std::string& fileName, const std::string& searchPath)
+{
+	tinyobj::ObjReader reader;
+	tinyobj::ObjReaderConfig reader_config;
+	reader_config.mtl_search_path = searchPath; // Path to material files
+
+	if (!reader.ParseFromFile(fileName, reader_config)) {
+		/*if (!reader.Error().empty()) {
+			std::cerr << "TinyObjReader: " << reader.Error();
+		}*/
+		return false;
+	}
+	auto& attrib = reader.GetAttrib();
+	auto& shapes = reader.GetShapes();
+
+	// Loop over shapes
+	for (size_t s = 0; s < shapes.size(); s++) {
+		// Loop over faces(polygon)
+		size_t index_offset = 0;
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+			int fv = shapes[s].mesh.num_face_vertices[f];
+			// Loop over vertices in the face.
+			for (size_t v = 0; v < fv; v++) {
+				// access to vertex
+				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+				Vertex vertex = {};
+				vertex.x = attrib.vertices[3 * idx.vertex_index + 0];
+				vertex.y = attrib.vertices[3 * idx.vertex_index + 1];
+				vertex.z = attrib.vertices[3 * idx.vertex_index + 2];
+				if (idx.normal_index >= 0) {
+					vertex.nx = attrib.normals[3 * idx.normal_index + 0];
+					vertex.ny = attrib.normals[3 * idx.normal_index + 1];
+					vertex.nz = attrib.normals[3 * idx.normal_index + 2];
+				}
+				vertex.r = 0.0f;
+				vertex.g = 0.8f;
+				vertex.b = 0.8f;
+				vertices.push_back(vertex);
+				indices.push_back(static_cast<unsigned short>(indices.size()));
+			}
+			index_offset += fv;
+		}
+	}
+	return true;
+}
+//////
