@@ -16,7 +16,8 @@ struct VS_INPUT
 {
     float3 pos : POSITION; // Matches the C++ Input Layout
     float3 color : COLOR; // Matches the C++ Input Layout
-    float3 normal : NORMAL; // Matches the C++ Input Layout
+    float3 normal : NORMAL; // Matches the C++ Input Layout 
+    float2 texcoord : TEXCOORD; // NEW
 };
 
 // Output from Vertex Shader -> Input to Pixel Shader
@@ -25,7 +26,12 @@ struct PS_INPUT
     float4 pos : SV_POSITION; // System Value Position
     float4 color : COLOR; // Pass through color (not used in this example)
     float3 normal : TEXCOORD0;
+    float2 uv : TEXCOORD1; // <--- NEW: The UV passed from VS
 };
+// Global Texture Resource (t0 = slot 0 for textures)
+Texture2D myTexture : register(t0);
+// Sampler State (s0 = slot 0 for samplers)
+SamplerState mySampler : register(s0);
 
 
 // =================================================================================
@@ -50,6 +56,7 @@ PS_INPUT VSMain(VS_INPUT input)
     output.normal = mul(input.normal, (float3x3) world); // Transform normal (ignore translation))
     
     output.color = float4(input.color, 1.0f);
+    output.uv = input.texcoord;
     
     return output;
 }
@@ -61,6 +68,7 @@ PS_INPUT VSMain(VS_INPUT input)
 // =================================================================================
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
+    float4 baseColor = myTexture.Sample(mySampler, input.uv);
     // 1. Setup a Light Direction (e.g., Light coming from top-left-front)
     float3 lightDir = normalize(float3(-1.0f, -1.0f, 0.0f));
 

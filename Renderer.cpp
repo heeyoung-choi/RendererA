@@ -1,9 +1,5 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "Renderer.h"
-#include <d3dcompiler.h>
-#include "tiny_object_loader.h"
-#pragma comment(lib, "d3dcompiler.lib")
-
 Renderer::Renderer()
 {
 	g_pDevice = nullptr;
@@ -11,6 +7,9 @@ Renderer::Renderer()
 	g_pSwapChain = nullptr;
 	g_pRenderTarget = nullptr;
 	g_pConstantBuffer = nullptr;
+	g_pBackBuffer = nullptr;
+	g_pD2DFactory = nullptr;
+	g_pBackBufferRT = nullptr;
 
 	g_pDSV = nullptr;
 
@@ -49,7 +48,7 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	sd.BufferCount = 1;                                 // 1 Back Buffer
 	sd.BufferDesc.Width = width;
 	sd.BufferDesc.Height = height;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // 32-bit Color
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // 32-bit Color and supported by DirectX 2D
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -64,9 +63,10 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 #ifdef _DEBUG
 	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG; // Helpful debug messages
 #endif
+	createDeviceFlags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT; //to support 2d stuff
 
 	D3D_FEATURE_LEVEL featureLevel;
-	const D3D_FEATURE_LEVEL featureLevelArray[] = { D3D_FEATURE_LEVEL_11_0 };
+	const D3D_FEATURE_LEVEL featureLevelArray[] = {  D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
 
 	hr = D3D11CreateDeviceAndSwapChain(
 		NULL,
@@ -141,6 +141,12 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	viewport.TopLeftY = 0;
 
 	g_pContext->RSSetViewports(1, &viewport);
+
+
+	// 
+	hr = InitUIPipeline(hWnd);
+	if (FAILED(hr)) return hr;
+
 	return S_OK;
 }
 
@@ -241,6 +247,7 @@ HRESULT Renderer::InitShaders()
 
 		// 3. Normal (Offset 24 - after Pos(12) + Col(12))
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	// We need the VS signature (bytecode) to validate the layout
@@ -297,7 +304,7 @@ void Renderer::RenderFrame()
 	//rotate overtime 
 	static float t = 0.0f;
 	t += 0.01f;
-	XMMATRIX scale_mat = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	XMMATRIX scale_mat = XMMatrixScaling(0.25f, 0.25f, 0.25f);
 	XMMATRIX world = XMMatrixRotationY(t) * scale_mat;
 	// 2. View: The "Camera"
 	// Eye: Where the camera is (0, 1, -2) -> Back 2 units, up 1 unit
@@ -353,7 +360,7 @@ void Renderer::RenderFrame()
 	g_pContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	g_pContext->DrawIndexed(indices.size(), 0, 0);
 	// ============================================================
-
+	DrawUI();
 	// 2. Present (same as before)
 	g_pSwapChain->Present(1, 0);
 }
@@ -392,6 +399,10 @@ bool Renderer::ImportModel(const std::string& fileName, const std::string& searc
 					vertex.ny = attrib.normals[3 * idx.normal_index + 1];
 					vertex.nz = attrib.normals[3 * idx.normal_index + 2];
 				}
+				if (idx.texcoord_index >= 0) {
+					vertex.u = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+					vertex.v = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+				}
 				vertex.r = 0.0f;
 				vertex.g = 0.8f;
 				vertex.b = 0.8f;
@@ -402,5 +413,71 @@ bool Renderer::ImportModel(const std::string& fileName, const std::string& searc
 		}
 	}
 	return true;
+}
+HRESULT Renderer::InitUIPipeline(HWND hWnd)
+{
+	HRESULT hr;
+	hr = g_pSwapChain->GetBuffer(0, __uuidof(IDXGISurface),(void**) (&g_pBackBuffer));
+	if (FAILED(hr)) return hr;
+
+	float dpi = GetDpiForWindow(hWnd);
+
+	const D2D1_RENDER_TARGET_PROPERTIES props =
+		D2D1::RenderTargetProperties(
+			D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+			dpi,
+			dpi);
+
+	// Create a Direct2D render target that can draw into the surface in the swap chain
+	D2D1_FACTORY_OPTIONS options;
+	#if defined(_DEBUG)
+	// If the project is in a debug build, enable Direct2D debugging via SDK Layers.
+		options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+	#endif
+	D2D1CreateFactory(
+		D2D1_FACTORY_TYPE_SINGLE_THREADED,
+		__uuidof(ID2D1Factory),
+		&options,
+		(void**)&g_pD2DFactory
+		);
+
+	hr = g_pD2DFactory->CreateDxgiSurfaceRenderTarget(
+		g_pBackBuffer,
+		&props,
+		&g_pBackBufferRT);
+	if (FAILED(hr)) return hr;
+	
+	hr = g_pBackBufferRT->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::Black),
+		&g_pBrushBlack);
+
+	return hr;
+}
+HRESULT Renderer::DrawUI()
+{
+	HRESULT hr = S_OK;
+	if (g_pBackBufferRT)
+	{
+		D2D1_SIZE_F targetSize = g_pBackBufferRT->GetSize();
+
+		g_pBackBufferRT->BeginDraw();
+
+		g_pBrushBlack->SetTransform(
+			D2D1::Matrix3x2F::Scale(targetSize)
+		);
+
+		D2D1_RECT_F rect = D2D1::RectF(
+			0.0f,
+			0.0f,
+			40.0f,
+			40.0f
+		);
+
+		g_pBackBufferRT->FillRectangle(&rect, g_pBrushBlack);
+
+		hr = g_pBackBufferRT->EndDraw();
+	}
+	return hr;
 }
 //////
