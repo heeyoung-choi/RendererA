@@ -5,7 +5,10 @@
 #include <string>
 #include <d2d1.h>
 #include <d3dcompiler.h>
+#include <dwrite.h>
 #include "tiny_object_loader.h"
+#include <wrl/client.h>
+using Microsoft::WRL::ComPtr;
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d2d1.lib")        // Fixes "unresolved external symbol D2D1CreateFactory"
 #pragma comment(lib, "dxgi.lib")        // Needed for DXGI Surface interfaces
@@ -22,23 +25,7 @@ public:
 	Renderer();
 	~Renderer()
 	{
-		if (g_pInputLayout)   g_pInputLayout->Release();   
-		if (g_pVertexShader)  g_pVertexShader->Release(); 
-		if (g_pPixelShader)   g_pPixelShader->Release();
-		if (g_pConstantBuffer) g_pConstantBuffer->Release();
-		if (g_pVertexBuffer) g_pVertexBuffer->Release();
-		if (g_pIndexBuffer)  g_pIndexBuffer->Release();
-		if (g_pBackBuffer)  g_pBackBuffer->Release();
-		if (g_pD2DFactory)  g_pD2DFactory->Release();
-		if (g_pBackBufferRT) g_pBackBufferRT->Release();
-		if (g_pBrushBlack) g_pBrushBlack->Release();
-
-		if (g_pDSV)          g_pDSV->Release();
-
-		if (g_pRenderTarget) g_pRenderTarget->Release();
-		if (g_pSwapChain)    g_pSwapChain->Release();
-		if (g_pContext)      g_pContext->Release();
-		if (g_pDevice)       g_pDevice->Release();
+		
 
 	}
 private:
@@ -56,23 +43,27 @@ private:
 	HRESULT InitUIPipeline(HWND hWnd);
 	HRESULT DrawUI();
 private:
-	ID3D11Device* g_pDevice;        // The Resource Manager
-	ID3D11DeviceContext* g_pContext;       // The Artist
-	IDXGISwapChain* g_pSwapChain;     // The Double Buffer Manager
-	ID3D11RenderTargetView* g_pRenderTarget;  // The Canvas
-	ID3D11Buffer* g_pConstantBuffer;
-	ID3D11Buffer* g_pVertexBuffer; // The Vertex Buffer
-	ID3D11Buffer* g_pIndexBuffer;
-	ID3D11DepthStencilView* g_pDSV; // depth canvas
-	IDXGISurface* g_pBackBuffer; // surface 
-	ID2D1RenderTarget* g_pBackBufferRT; // Direct2D Render Target
-	ID2D1Factory* g_pD2DFactory; //FACTOry 
-	ID2D1SolidColorBrush* g_pBrushBlack;
-    
+	ComPtr<ID3D11Device> g_pDevice;        // The Resource Manager
+	ComPtr<ID3D11DeviceContext> g_pContext;       // The Artist
+	ComPtr<IDXGISwapChain> g_pSwapChain;     // The Double Buffer Manager
+	ComPtr<ID3D11RenderTargetView> g_pRenderTarget;  // The Canvas
+	ComPtr<ID3D11Buffer> g_pConstantBuffer;
+	ComPtr<ID3D11Buffer> g_pVertexBuffer; // The Vertex Buffer
+	ComPtr<ID3D11Buffer> g_pIndexBuffer;
+	ComPtr<ID3D11DepthStencilView> g_pDSV; // depth canvas
+	ComPtr<IDXGISurface> g_pBackBuffer; // surface 
+	ComPtr<ID2D1RenderTarget> g_pBackBufferRT; // Direct2D Render Target
+	ComPtr<ID2D1Factory> g_pD2DFactory; //FACTOry
 
-	ID3D11VertexShader* g_pVertexShader;
-	ID3D11PixelShader* g_pPixelShader;
-	ID3D11InputLayout* g_pInputLayout;
+	ComPtr<ID2D1SolidColorBrush> g_pBrushBlack;
+	ComPtr<ID2D1SolidColorBrush> g_pBrushWhite;
+	ComPtr<IDWriteTextFormat> g_pTextFormat;
+	ComPtr<IDWriteFactory> g_pDWriteFactory;
+
+
+	ComPtr<ID3D11VertexShader> g_pVertexShader;
+	ComPtr<ID3D11PixelShader> g_pPixelShader;
+	ComPtr<ID3D11InputLayout> g_pInputLayout;
     std::vector<Vertex> vertices;
     std::vector<unsigned short> indices;
 

@@ -2,20 +2,6 @@
 #include "Renderer.h"
 Renderer::Renderer()
 {
-	g_pDevice = nullptr;
-	g_pContext = nullptr;
-	g_pSwapChain = nullptr;
-	g_pRenderTarget = nullptr;
-	g_pConstantBuffer = nullptr;
-	g_pBackBuffer = nullptr;
-	g_pD2DFactory = nullptr;
-	g_pBackBufferRT = nullptr;
-
-	g_pDSV = nullptr;
-
-	g_pVertexShader = nullptr;
-	g_pPixelShader = nullptr;
-	g_pInputLayout = nullptr;
 
 }
 
@@ -77,10 +63,10 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 		1,
 		D3D11_SDK_VERSION,
 		&sd,
-		&g_pSwapChain,
-		&g_pDevice,
+		g_pSwapChain.GetAddressOf(),
+		g_pDevice.GetAddressOf(),
 		&featureLevel,
-		&g_pContext);
+		g_pContext.GetAddressOf());
 
 	if (FAILED(hr)) return hr;
 
@@ -91,7 +77,7 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	if (FAILED(hr)) return hr;
 
 	// Create the view
-	hr = g_pDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_pRenderTarget);
+	hr = g_pDevice->CreateRenderTargetView(pBackBuffer, NULL, g_pRenderTarget.GetAddressOf());
 	pBackBuffer->Release(); // We don't need the raw pointer anymore
 	if (FAILED(hr)) return hr;
 	// ============================================================
@@ -125,11 +111,11 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	descDSV.Texture2D.MipSlice = 0;
 
-	hr = g_pDevice->CreateDepthStencilView(pDepthStencilTex, &descDSV, &g_pDSV);
+	hr = g_pDevice->CreateDepthStencilView(pDepthStencilTex, &descDSV, g_pDSV.GetAddressOf());
 	pDepthStencilTex->Release(); // Done with the raw texture pointer
 	if (FAILED(hr)) return hr;
 	// D. Bind the View
-	g_pContext->OMSetRenderTargets(1, &g_pRenderTarget, g_pDSV);
+	g_pContext.Get()->OMSetRenderTargets(1, g_pRenderTarget.GetAddressOf(), g_pDSV.Get());
 
 	// E. Set the Viewport (Tell DirectX how to map coordinates to the window)
 	D3D11_VIEWPORT viewport;
@@ -140,7 +126,7 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 
-	g_pContext->RSSetViewports(1, &viewport);
+	g_pContext.Get()->RSSetViewports(1, &viewport);
 
 
 	// 
@@ -164,7 +150,7 @@ HRESULT Renderer::InitGraphics()
 
 	D3D11_SUBRESOURCE_DATA vsd = { 0 };
 	vsd.pSysMem = vertices.data(); // .data() gives the raw pointer needed by DirectX
-	g_pDevice->CreateBuffer(&vbd, &vsd, &g_pVertexBuffer);
+	g_pDevice->CreateBuffer(&vbd, &vsd, g_pVertexBuffer.GetAddressOf());
 
 	// Setup Index Buffer
 	D3D11_BUFFER_DESC ibd = { 0 };
@@ -175,7 +161,7 @@ HRESULT Renderer::InitGraphics()
 
 	D3D11_SUBRESOURCE_DATA isd = { 0 };
 	isd.pSysMem = indices.data();
-	g_pDevice->CreateBuffer(&ibd, &isd, &g_pIndexBuffer);
+	g_pDevice->CreateBuffer(&ibd, &isd, g_pIndexBuffer.GetAddressOf());
 	
 
 
@@ -187,7 +173,7 @@ HRESULT Renderer::InitGraphics()
 	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-	return g_pDevice->CreateBuffer(&cbd, nullptr, &g_pConstantBuffer);
+	return g_pDevice->CreateBuffer(&cbd, nullptr, g_pConstantBuffer.GetAddressOf());
 	return S_OK;
 }
 
@@ -231,7 +217,7 @@ HRESULT Renderer::InitShaders()
 	hr = g_pDevice->CreateVertexShader(
 		pVSBlob->GetBufferPointer(),
 		pVSBlob->GetBufferSize(),
-		nullptr, &g_pVertexShader);
+		nullptr, g_pVertexShader.GetAddressOf());
 	if (FAILED(hr)) return hr;
 
 
@@ -255,7 +241,7 @@ HRESULT Renderer::InitShaders()
 		ied, ARRAYSIZE(ied),
 		pVSBlob->GetBufferPointer(),
 		pVSBlob->GetBufferSize(),
-		&g_pInputLayout);
+		g_pInputLayout.GetAddressOf());
 
 	pVSBlob->Release(); // Done with the vertex shader bytecode blob
 	if (FAILED(hr)) return hr;
@@ -280,7 +266,7 @@ HRESULT Renderer::InitShaders()
 	hr = g_pDevice->CreatePixelShader(
 		pPSBlob->GetBufferPointer(),
 		pPSBlob->GetBufferSize(),
-		nullptr, &g_pPixelShader);
+		nullptr, g_pPixelShader.GetAddressOf());
 
 	pPSBlob->Release(); // Done with pixel shader blob
 	if (FAILED(hr)) return hr;
@@ -293,8 +279,8 @@ void Renderer::RenderFrame()
 {
 	// 1. Clear screen (same as before)
 	const float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-	g_pContext->ClearRenderTargetView(g_pRenderTarget, color);
-	g_pContext->ClearDepthStencilView(g_pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	g_pContext.Get()->ClearRenderTargetView(g_pRenderTarget.Get(), color);
+	g_pContext.Get()->ClearDepthStencilView(g_pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	// ============================================================
 	// NEW CODE: DRAW THE TRIANGLE
 	// ============================================================
@@ -328,37 +314,37 @@ void Renderer::RenderFrame()
 	// D. MAP & UPLOAD
 	// Lock the constant buffer so we can write to it
 	D3D11_MAPPED_SUBRESOURCE mappedRes;
-	g_pContext->Map(g_pConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedRes);
+	g_pContext.Get()->Map(g_pConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedRes);
 
 	// Copy the data
 	memcpy(mappedRes.pData, &cb, sizeof(ConstantBuffer));
 
 	// Unlock it
-	g_pContext->Unmap(g_pConstantBuffer, 0);
+	g_pContext.Get()->Unmap(g_pConstantBuffer.Get(), 0);
 
 
 
 
 
 	// A. Bind the Input Layout
-	g_pContext->IASetInputLayout(g_pInputLayout);
+	g_pContext.Get()->IASetInputLayout(g_pInputLayout.Get());
 
 
 
 	// C. Tell IA how to interpret the data (a list of triangles)
-	g_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	g_pContext.Get()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// [NEW] Bind the Constant Buffer to the Vertex Shader (Slot 0)
-	g_pContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+	g_pContext.Get()->VSSetConstantBuffers(0, 1, g_pConstantBuffer.GetAddressOf());
 	// D. Bind the Shaders
-	g_pContext->VSSetShader(g_pVertexShader, nullptr, 0);
-	g_pContext->PSSetShader(g_pPixelShader, nullptr, 0);
+	g_pContext.Get()->VSSetShader(g_pVertexShader.Get(), nullptr, 0);
+	g_pContext.Get()->PSSetShader(g_pPixelShader.Get(), nullptr, 0);
 
 	// E. DRAW!
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	g_pContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
-	g_pContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	g_pContext->DrawIndexed(indices.size(), 0, 0);
+	g_pContext.Get()->IASetVertexBuffers(0, 1, g_pVertexBuffer.GetAddressOf(), &stride, &offset);
+	g_pContext.Get()->IASetIndexBuffer(g_pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+	g_pContext.Get()->DrawIndexed(indices.size(), 0, 0);
 	// ============================================================
 	DrawUI();
 	// 2. Present (same as before)
@@ -417,7 +403,7 @@ bool Renderer::ImportModel(const std::string& fileName, const std::string& searc
 HRESULT Renderer::InitUIPipeline(HWND hWnd)
 {
 	HRESULT hr;
-	hr = g_pSwapChain->GetBuffer(0, __uuidof(IDXGISurface),(void**) (&g_pBackBuffer));
+	hr = g_pSwapChain->GetBuffer(0, __uuidof(IDXGISurface),(void**) (g_pBackBuffer.GetAddressOf()));
 	if (FAILED(hr)) return hr;
 
 	float dpi = GetDpiForWindow(hWnd);
@@ -439,18 +425,18 @@ HRESULT Renderer::InitUIPipeline(HWND hWnd)
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
 		__uuidof(ID2D1Factory),
 		&options,
-		(void**)&g_pD2DFactory
+		(void**)g_pD2DFactory.GetAddressOf()
 		);
 
-	hr = g_pD2DFactory->CreateDxgiSurfaceRenderTarget(
-		g_pBackBuffer,
+	hr = g_pD2DFactory.Get()->CreateDxgiSurfaceRenderTarget(
+		g_pBackBuffer.Get(),
 		&props,
-		&g_pBackBufferRT);
+		g_pBackBufferRT.GetAddressOf());
 	if (FAILED(hr)) return hr;
 	
 	hr = g_pBackBufferRT->CreateSolidColorBrush(
 		D2D1::ColorF(D2D1::ColorF::Black),
-		&g_pBrushBlack);
+		g_pBrushBlack.GetAddressOf());
 
 	return hr;
 }
@@ -474,9 +460,9 @@ HRESULT Renderer::DrawUI()
 			40.0f
 		);
 
-		g_pBackBufferRT->FillRectangle(&rect, g_pBrushBlack);
+		g_pBackBufferRT.Get()->FillRectangle(&rect, g_pBrushBlack.Get());
 
-		hr = g_pBackBufferRT->EndDraw();
+		hr = g_pBackBufferRT.Get()->EndDraw();
 	}
 	return hr;
 }
