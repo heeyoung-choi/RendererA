@@ -428,16 +428,53 @@ HRESULT Renderer::InitUIPipeline(HWND hWnd)
 		(void**)g_pD2DFactory.GetAddressOf()
 		);
 
+
 	hr = g_pD2DFactory.Get()->CreateDxgiSurfaceRenderTarget(
 		g_pBackBuffer.Get(),
 		&props,
 		g_pBackBufferRT.GetAddressOf());
+
 	if (FAILED(hr)) return hr;
+
+	hr = InitTextResources();
 	
+	if (FAILED(hr)) return hr;
+
+	hr = CreateBrushes();
+	
+
+	return hr;
+}
+HRESULT Renderer::InitTextResources()
+{
+	HRESULT hr = S_OK;
+	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown**>(g_pDWriteFactory.GetAddressOf()));
+	if (FAILED(hr)) return hr;
+	//create text format
+	hr = g_pDWriteFactory.Get()->CreateTextFormat(
+		L"Arial",
+		NULL,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		10.0f * 96.0f / 72.0f,
+		L"en-US",
+		g_pTextFormat.GetAddressOf()
+	);
+	return hr;
+}
+HRESULT Renderer::CreateBrushes()
+{
+	HRESULT hr = S_OK;
 	hr = g_pBackBufferRT->CreateSolidColorBrush(
 		D2D1::ColorF(D2D1::ColorF::Black),
 		g_pBrushBlack.GetAddressOf());
-
+	if (FAILED(hr)) return hr;
+	hr = g_pBackBufferRT->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::White),
+		g_pBrushWhite.GetAddressOf());
 	return hr;
 }
 HRESULT Renderer::DrawUI()
@@ -456,14 +493,25 @@ HRESULT Renderer::DrawUI()
 		D2D1_RECT_F rect = D2D1::RectF(
 			0.0f,
 			0.0f,
-			40.0f,
-			40.0f
+			100.0f,
+			100.0f
 		);
 
 		g_pBackBufferRT.Get()->FillRectangle(&rect, g_pBrushBlack.Get());
-
+		DrawText();
 		hr = g_pBackBufferRT.Get()->EndDraw();
 	}
 	return hr;
+}
+void Renderer::DrawText()
+{
+	D2D1_RECT_F layoutRect = D2D1::RectF(0.f, 0.f, 100.f, 100.f);
+	 g_pBackBufferRT.Get()->DrawText(
+		L"Hello World",
+		wcslen(L"Hello World"),
+		g_pTextFormat.Get(),
+		layoutRect,
+		g_pBrushWhite.Get()
+	);
 }
 //////

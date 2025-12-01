@@ -41,7 +41,10 @@ private:
 	void RenderFrame();
 	bool ImportModel(const std::string& fileName, const std::string& searchPath);
 	HRESULT InitUIPipeline(HWND hWnd);
+	HRESULT InitTextResources();
+	HRESULT CreateBrushes();
 	HRESULT DrawUI();
+	void DrawText();
 private:
 	ComPtr<ID3D11Device> g_pDevice;        // The Resource Manager
 	ComPtr<ID3D11DeviceContext> g_pContext;       // The Artist
