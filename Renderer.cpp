@@ -473,6 +473,10 @@ HRESULT Renderer::CreateBrushes()
 		g_pBrushBlack.GetAddressOf());
 	if (FAILED(hr)) return hr;
 	hr = g_pBackBufferRT->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::Black),
+		g_pBrushUIMain.GetAddressOf());
+	if (FAILED(hr)) return hr;
+	hr = g_pBackBufferRT->CreateSolidColorBrush(
 		D2D1::ColorF(D2D1::ColorF::White),
 		g_pBrushWhite.GetAddressOf());
 	return hr;

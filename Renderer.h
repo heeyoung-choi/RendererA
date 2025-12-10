@@ -7,12 +7,11 @@
 #include <d3dcompiler.h>
 #include <dwrite.h>
 #include "tiny_object_loader.h"
-#include <wrl/client.h>
-using Microsoft::WRL::ComPtr;
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "d2d1.lib")        // Fixes "unresolved external symbol D2D1CreateFactory"
-#pragma comment(lib, "dxgi.lib")        // Needed for DXGI Surface interfaces
-#pragma comment(lib, "Shcore.lib")
+
+#include "Common.h"
+
+
+
 
 // Link the Direct3D library automatically
 // (Alternatively, you can add d3d11.lib in Project Properties -> Linker -> Input)
@@ -47,7 +46,7 @@ private:
 	void DrawText();
 private:
 	ComPtr<ID3D11Device> g_pDevice;        // The Resource Manager
-	ComPtr<ID3D11DeviceContext> g_pContext;       // The Artist
+	ComPtr<ID3D11DeviceContext> g_pContext;       // The Artist]]]]]]]]]]p]
 	ComPtr<IDXGISwapChain> g_pSwapChain;     // The Double Buffer Manager
 	ComPtr<ID3D11RenderTargetView> g_pRenderTarget;  // The Canvas
 	ComPtr<ID3D11Buffer> g_pConstantBuffer;
@@ -60,6 +59,7 @@ private:
 
 	ComPtr<ID2D1SolidColorBrush> g_pBrushBlack;
 	ComPtr<ID2D1SolidColorBrush> g_pBrushWhite;
+	ComPtr<ID2D1SolidColorBrush> g_pBrushUIMain;
 	ComPtr<IDWriteTextFormat> g_pTextFormat;
 	ComPtr<IDWriteFactory> g_pDWriteFactory;
 
