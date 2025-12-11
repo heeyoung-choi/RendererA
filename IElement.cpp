@@ -2,8 +2,8 @@
 
 
 
-IElement::IElement(RectD _area, bool _isHovered)
-	: area(_area), isHovered(_isHovered)
+IElement::IElement(RectD _area)
+	: area(_area), isHovered(false)
 {
 
 }

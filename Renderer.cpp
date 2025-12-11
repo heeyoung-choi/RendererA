@@ -346,8 +346,13 @@ void Renderer::RenderFrame()
 	g_pContext.Get()->IASetIndexBuffer(g_pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 	g_pContext.Get()->DrawIndexed(indices.size(), 0, 0);
 	// ============================================================
-	DrawUI();
-	// 2. Present (same as before)
+	//DrawUI();
+	
+	
+}
+
+void Renderer::Present()
+{
 	g_pSwapChain->Present(1, 0);
 }
 

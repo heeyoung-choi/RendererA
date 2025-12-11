@@ -38,11 +38,17 @@ Window::Window(int width, int height)
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
 	renderer.InitD3D(hWnd, height, width);
+	InitUI();
 }
 
 void Window::Render()
 {
 	renderer.RenderFrame();
+
+	uiManager.DrawUI(renderer.g_pBackBufferRT.Get(), renderer.g_pBrushUIMain.Get(), renderer.g_pDWriteFactory.Get(), renderer.g_pTextFormat.Get());
+
+
+	renderer.Present();
 }
 
 LRESULT Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
@@ -79,8 +85,32 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         case WM_DESTROY:
             PostQuitMessage(0);
 			return 0;
+        case WM_MOUSEMOVE:
+            {
+            int mouseX = LOWORD(lParam);
+            int mouseY = HIWORD(lParam);
+            // Handle mouse movement, e.g., update UI elements
+			uiManager.HandleMouseMove(mouseX, mouseY);
+            break;
+		}
         default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
     }
+    return S_OK;
+}
 
+void Window::InitUI()
+{
+    wchar_t const* m1 = L"Hello World";
+    uiManager.CreateButton(
+        RectD{ 50.0f, 50.0f, 200.0f, 100.0f },
+        ColorD{ 0.2f, 0.2f, 0.8f, 1.0f },
+        ColorD{ 1.0f, 1.0f, 1.0f, 1.0f },
+        0.0f,
+        0.0f,
+        m1,
+        RectD{ 50.0f, 50.0f, 200.0f, 100.0f });
+
+    // Use buffer...
+   // free(buffer); // Remember to free when done
 }

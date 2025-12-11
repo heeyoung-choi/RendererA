@@ -38,6 +38,7 @@ private:
 	// Helper to compile and create shaders and input layout
 	HRESULT InitShaders();
 	void RenderFrame();
+	void Present();
 	bool ImportModel(const std::string& fileName, const std::string& searchPath);
 	HRESULT InitUIPipeline(HWND hWnd);
 	HRESULT InitTextResources();

@@ -3,7 +3,7 @@
 class IClickable
 {
 public:
-	IClickable(bool _isPressed, RectD _clickableArea);
+	IClickable(RectD _clickableArea);
 	virtual void OnMouseDown() = 0;
 	virtual void OnMouseUp() = 0;
 	bool IsPressed() const { return isPressed; };

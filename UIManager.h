@@ -1,7 +1,6 @@
 
 #pragma once
 #include "UIButton.h"
-#include "Renderer.h"
 #include <vector>
 #include <memory>
 using std::vector;
@@ -15,7 +14,12 @@ public:
 private:
 	vector<unique_ptr<IElement>> elements;
 public:
-	void CreateButton(unique_ptr<Renderer> render,
-		RectD _area,
-		bool );
+	void CreateButton(RectD _area,
+		ColorD _baseColor,
+		ColorD _textColor,
+		float _pWidth,
+		float _pHeight, WCHAR const* _buttonText,
+		RectD _clickableArea);
+	HRESULT DrawUI(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteFactory* dWriteFactory, IDWriteTextFormat* textFormat);
+	void HandleMouseMove(int mouseX, int mouseY);
 };
