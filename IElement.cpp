@@ -3,7 +3,7 @@
 
 
 IElement::IElement(RectD _area)
-	: area(_area), isHovered(false)
+	: area(_area), isHovered(false), isActive(true)
 {
 
 }

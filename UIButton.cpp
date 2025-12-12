@@ -85,12 +85,16 @@ void UIButton::OnMouseLeave()
 	isHovered = false;
 }
 
-void UIButton::OnMouseDown()
+void UIButton::OnLeftMouseDown()
 {
+	if (onLeftMouseDownAction)
+		onLeftMouseDownAction();
 }
 
-void UIButton::OnMouseUp()
+void UIButton::OnLeftMouseUp()
 {
+	if (onLeftMouseUpAction)
+		onLeftMouseUpAction();
 }
 	
 bool UIButton::IsMouseIn(int mouseX, int mouseY)

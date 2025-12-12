@@ -15,7 +15,11 @@ public:
 	virtual bool IsMouseIn(int mouseX, int mouseY) = 0;
 	bool IsHovered() const { return isHovered; };
 	virtual void Draw(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteFactory* dWriteFactory, IDWriteTextFormat* textFormat) = 0;
+
+	bool IsActive() const { return isActive; };
+	void SetActive(bool active) { isActive = active; };
 protected:
 	bool isHovered;
+	bool isActive;
 	RectD area;
 };

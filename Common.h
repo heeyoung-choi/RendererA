@@ -7,7 +7,8 @@ typedef D2D1_RECT_F RectD;
 #include <D3D9Types.h>
 typedef D2D1_COLOR_F ColorD;
 
-
+#include <functional>
+typedef std::function<void()> Action;
 
 #include <wrl/client.h>
 using Microsoft::WRL::ComPtr; //for com pointer

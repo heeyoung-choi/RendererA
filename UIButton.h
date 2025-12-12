@@ -21,8 +21,8 @@ public:
 		IDWriteTextFormat*  textFormat) override;
 	void OnMouseEnter() override;
 	void OnMouseLeave() override;
-	void OnMouseDown() override;
-	void OnMouseUp() override;
+	void OnLeftMouseDown() override;
+	void OnLeftMouseUp() override;
 	bool IsMouseIn(int mouseX, int mouseY) override;
 public:
 	float GetWidth();

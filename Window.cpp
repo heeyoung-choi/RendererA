@@ -93,6 +93,14 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 			uiManager.HandleMouseMove(mouseX, mouseY);
             break;
 		}
+        case WM_LBUTTONDOWN:
+            {
+            int mouseX = LOWORD(lParam);
+            int mouseY = HIWORD(lParam);
+			// Handle mouse button down, e.g., check if a UI element was clicked
+            uiManager.HandleMouseDown(mouseX, mouseY);
+			break;
+		    }
         default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
     }
@@ -102,15 +110,20 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 void Window::InitUI()
 {
     wchar_t const* m1 = L"Hello World";
-    uiManager.CreateButton(
-        RectD{ 50.0f, 50.0f, 200.0f, 100.0f },
-        ColorD{ 0.2f, 0.2f, 0.8f, 1.0f },
+    auto mybutton = std::make_unique<UIButton>(
+        RectD{ 300.0f, 50.0f, 500.0f, 150.0f },
+        ColorD{ 0.8f, 0.2f, 0.2f, 1.0f },
         ColorD{ 1.0f, 1.0f, 1.0f, 1.0f },
-        0.0f,
-        0.0f,
+        10.0f,
+        10.0f,
         m1,
-        RectD{ 50.0f, 50.0f, 200.0f, 100.0f });
-
+		RectD{ 300.0f, 50.0f, 500.0f, 150.0f });
+    
+	UIButton* buttonPtr = mybutton.get();
+    mybutton->SetLeftMouseDownAction([buttonPtr]() {
+		buttonPtr->SetText(L"Clicked!");
+		});
+	uiManager.CreateButton(std::move(mybutton));
     // Use buffer...
    // free(buffer); // Remember to free when done
 }

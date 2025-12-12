@@ -22,6 +22,8 @@ HRESULT UIManager::DrawUI(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush*
 		renderTarget->BeginDraw();
 		for (const auto& element : elements)
 		{
+			if (!element->IsActive())
+				continue;
 			//button
 			if (element->GetType() == UIType::Button)
 			{
@@ -39,7 +41,27 @@ void UIManager::HandleMouseMove(int mouseX, int mouseY)
 {
 	for (const auto& element : elements)
 	{
+		if (!element->IsActive())
+			continue;
 		if (element->GetType() == UIType::Button)
 		element->IsMouseIn(mouseX, mouseY);
 	}
 }
+
+void UIManager::HandleMouseDown(int mouseX, int mouseY)
+{
+	for (const auto& element : elements)
+	{
+		if (!element->IsActive())
+			continue;
+		if (element->GetType() == UIType::Button && element->IsMouseIn(mouseX, mouseY))
+		{
+			UIButton* button = static_cast<UIButton*>(element.get());
+			if (button)
+			{
+				button->OnLeftMouseDown();
+			}
+		}
+	}
+}
+
