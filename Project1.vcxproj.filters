@@ -73,14 +73,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders_1.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Project1.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="shaders_1.hlsl" />
   </ItemGroup>
 </Project>

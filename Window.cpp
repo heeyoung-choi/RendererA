@@ -142,14 +142,15 @@ void Window::InitUI(HWND hWnd)
         {
             if (extension == ".obj")
             {
-                HRESULT hr = renderer.InitGraphics(fileName, searchPath);
-                if (! hr == S_OK)
+                HRESULT hr = renderer.InitGraphics(path, searchPath);
+                if ( hr == S_OK)
                 {
-                    debugLabelPtr->SetText(L"Failed to load model");
+                    debugLabelPtr->SetText(L"Loaded: " + Helper::string_to_wstring(fileName));
                 }
                 else
                 {
-                    debugLabelPtr->SetText(L"Loaded: " + Helper::string_to_wstring(fileName));
+                    debugLabelPtr->SetText(L"Failed to load model");
+
                 }
             }
             else

@@ -118,7 +118,8 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	g_pContext.Get()->OMSetRenderTargets(1, g_pRenderTarget.GetAddressOf(), g_pDSV.Get());
 
 	// E. Set the Viewport (Tell DirectX how to map coordinates to the window)
-	D3D11_VIEWPORT viewport;
+	D3D11_VIEWPORT  viewport{
+	};
 	viewport.Width = (FLOAT)width;
 	viewport.Height = (FLOAT)height;
 	viewport.MinDepth = 0.0f;
@@ -181,96 +182,121 @@ HRESULT Renderer::InitGraphics(const std::string& fileName, const std::string& s
 
 HRESULT Renderer::InitShaders()
 {
-	HRESULT hr;
+	HRESULT hr = S_OK;
 
-
-
-	// ============================================================
-	// SHADER COMPILATION & INPUT LAYOUT
-	// ============================================================
-
-	// Blobs store the compiled bytecode or error messages
+	// Store blobs here (Binary data of the shaders)
 	ID3DBlob* pVSBlob = nullptr;
 	ID3DBlob* pPSBlob = nullptr;
 	ID3DBlob* pErrorBlob = nullptr;
 
+	// Flags for runtime compilation (fallback)
 	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifdef _DEBUG
-	flags |= D3DCOMPILE_DEBUG; // Add debug info to shaders
+	flags |= D3DCOMPILE_DEBUG;
 #endif
 
-	// 1. COMPILE VERTEX SHADER
-	// We compile the file "shaders_1.hlsl", looking for the function "VSMain".
-	// We use "vs_5_0" target (Shader Model 5, standard for DX11).
-	hr = D3DCompileFromFile(
-		L"shaders_1.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"VSMain", "vs_5_0",
-		flags, 0, &pVSBlob, &pErrorBlob);
+	// ============================================================
+	// 1. VERTEX SHADER (VS)
+	// ============================================================
 
-	if (FAILED(hr)) {
-		if (pErrorBlob) {
-			OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-			pErrorBlob->Release();
+	// Attempt A: Load Pre-Compiled Binary (VS.cso)
+	// This is ideal for Release builds.
+	hr = D3DReadFileToBlob(L"VS.cso", &pVSBlob);
+
+	// Attempt B: Runtime Compile (Fallback to .hlsl)
+	// If VS.cso is missing, we try to find the source code.
+	if (FAILED(hr))
+	{
+		// Output a warning so you know you are running in "Slow/Dev" mode
+		OutputDebugStringA("VS.cso not found. Falling back to runtime compilation of shaders_1.hlsl...\n");
+
+		hr = D3DCompileFromFile(
+			L"shaders_1.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"VSMain", "vs_5_0", // Entry point & Target
+			flags, 0, &pVSBlob, &pErrorBlob);
+
+		if (FAILED(hr)) {
+			if (pErrorBlob) {
+				MessageBoxA(NULL, (char*)pErrorBlob->GetBufferPointer(), "Vertex Shader Compile Error", MB_ICONERROR);
+				pErrorBlob->Release();
+			}
+			else {
+				MessageBoxA(NULL, "Vertex Shader File Not Found (VS.cso AND shaders_1.hlsl missing).", "Error", MB_ICONERROR);
+			}
+			return hr;
 		}
-		return hr;
 	}
 
-	// 2. CREATE VERTEX SHADER OBJECT
+	// Create the Vertex Shader Object
 	hr = g_pDevice->CreateVertexShader(
 		pVSBlob->GetBufferPointer(),
 		pVSBlob->GetBufferSize(),
 		nullptr, g_pVertexShader.GetAddressOf());
-	if (FAILED(hr)) return hr;
+
+	if (FAILED(hr)) { pVSBlob->Release(); return hr; }
 
 
-	// 3. CREATE INPUT LAYOUT
-	// This is the bridge map between C++ Vertex struct and HLSL VS_INPUT struct.
+	// ============================================================
+	// 2. INPUT LAYOUT
+	// ============================================================
+
+	// We need the VS Bytecode (pVSBlob) to validate the layout
 	D3D11_INPUT_ELEMENT_DESC ied[] =
 	{
-		// 1. Position (Offset 0)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-
-		// 2. Color (Offset 12 - after 3 floats)
 		{ "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-
-		// 3. Normal (Offset 24 - after Pos(12) + Col(12))
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	// We need the VS signature (bytecode) to validate the layout
 	hr = g_pDevice->CreateInputLayout(
 		ied, ARRAYSIZE(ied),
-		pVSBlob->GetBufferPointer(),
+		pVSBlob->GetBufferPointer(), // The bytecode we just loaded/compiled
 		pVSBlob->GetBufferSize(),
 		g_pInputLayout.GetAddressOf());
 
-	pVSBlob->Release(); // Done with the vertex shader bytecode blob
+	// We can finally release the VS blob, we don't need it anymore
+	pVSBlob->Release();
 	if (FAILED(hr)) return hr;
 
 
-	// 4. COMPILE PIXEL SHADER
-	// Look for function "PSMain", target "ps_5_0".
-	hr = D3DCompileFromFile(
-		L"shaders_1.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"PSMain", "ps_5_0",
-		flags, 0, &pPSBlob, &pErrorBlob);
+	// ============================================================
+	// 3. PIXEL SHADER (PS)
+	// ============================================================
 
-	if (FAILED(hr)) {
-		if (pErrorBlob) {
-			OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-			pErrorBlob->Release();
+	// Attempt A: Load Pre-Compiled Binary (PS.cso)
+	// Note: You must configure Visual Studio to output this file too!
+	hr = D3DReadFileToBlob(L"PS.cso", &pPSBlob);
+
+	// Attempt B: Runtime Compile (Fallback)
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("PS.cso not found. Falling back to runtime compilation...\n");
+
+		hr = D3DCompileFromFile(
+			L"shaders_1.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"PSMain", "ps_5_0", // Entry point & Target
+			flags, 0, &pPSBlob, &pErrorBlob);
+
+		if (FAILED(hr)) {
+			if (pErrorBlob) {
+				MessageBoxA(NULL, (char*)pErrorBlob->GetBufferPointer(), "Pixel Shader Compile Error", MB_ICONERROR);
+				pErrorBlob->Release();
+			}
+			else {
+				MessageBoxA(NULL, "Pixel Shader File Not Found (PS.cso AND shaders_1.hlsl missing).", "Error", MB_ICONERROR);
+			}
+			return hr;
 		}
-		return hr;
 	}
 
-	// 5. CREATE PIXEL SHADER OBJECT
+	// Create the Pixel Shader Object
 	hr = g_pDevice->CreatePixelShader(
 		pPSBlob->GetBufferPointer(),
 		pPSBlob->GetBufferSize(),
 		nullptr, g_pPixelShader.GetAddressOf());
 
-	pPSBlob->Release(); // Done with pixel shader blob
+	pPSBlob->Release(); // Done with PS blob
 	if (FAILED(hr)) return hr;
 
 	return S_OK;
@@ -308,9 +334,10 @@ void Renderer::RenderFrame()
 
 	// C. PREPARE DATA FOR GPU
 	// Important: We must TRANSPOSE matrices because HLSL stores them differently than C++
-	ConstantBuffer cb;
+	ConstantBuffer cb{};
 	cb.world = XMMatrixTranspose(world);
 	cb.view = XMMatrixTranspose(view);
+
 	cb.projection = XMMatrixTranspose(proj);
 
 	// D. MAP & UPLOAD
@@ -527,4 +554,4 @@ void Renderer::DrawText()
 		g_pBrushWhite.Get()
 	);
 }
-//////
+//////////////////////////
