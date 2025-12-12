@@ -136,9 +136,11 @@ HRESULT Renderer::InitPipeline(HWND hWnd, int width, int height)
 	return S_OK;
 }
 
-HRESULT Renderer::InitGraphics()
+HRESULT Renderer::InitGraphics(const std::string& fileName, const std::string& searchPath)
 {
-	ImportModel("shape.obj", "./");
+	g_pVertexBuffer.Reset();
+	g_pIndexBuffer.Reset();
+	ImportModel(fileName, searchPath);
 
 	// Define indices to build a hexagon from 6 triangles
 	 
@@ -358,6 +360,8 @@ void Renderer::Present()
 
 bool Renderer::ImportModel(const std::string& fileName, const std::string& searchPath)
 {
+	vertices.clear();
+	indices.clear();
 	tinyobj::ObjReader reader;
 	tinyobj::ObjReaderConfig reader_config;
 	reader_config.mtl_search_path = searchPath; // Path to material files
@@ -421,7 +425,7 @@ HRESULT Renderer::InitUIPipeline(HWND hWnd)
 			dpi);
 
 	// Create a Direct2D render target that can draw into the surface in the swap chain
-	D2D1_FACTORY_OPTIONS options;
+	D2D1_FACTORY_OPTIONS options = {};
 	#if defined(_DEBUG)
 	// If the project is in a debug build, enable Direct2D debugging via SDK Layers.
 		options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;

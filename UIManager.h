@@ -18,7 +18,7 @@ public:
 		ColorD _baseColor,
 		ColorD _textColor,
 		float _pWidth,
-		float _pHeight, WCHAR const* _buttonText,
+		float _pHeight, std::wstring _buttonText,
 		RectD _clickableArea);
 	void CreateButton(unique_ptr<UIButton> button)
 	{

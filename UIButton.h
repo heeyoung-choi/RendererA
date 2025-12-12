@@ -8,7 +8,7 @@ class UIButton : public IElement, public IClickable
 public:
 	UIButton(RectD _area, ColorD _baseColor,
 		ColorD _textColor, float _pWidth,
-		float _pHeight, WCHAR const* _buttonText, RectD _clickableArea);
+		float _pHeight, std::wstring _buttonText, RectD _clickableArea);
 	
 	
 	ColorD GetBaseColor() const { return baseColor; };
@@ -28,14 +28,15 @@ public:
 	float GetWidth();
 	float GetHeight();
 	UIType GetType() const override { return UIType::Button; };
-	WCHAR const* GetText() const { return buttonText; };
-	void SetText(WCHAR const* newText) { 
+	std::wstring const GetText() const { return buttonText; };
+	void SetText(std::wstring newText) {
+		
 		buttonText = newText; 
 		isTextDirty = true;
 	};
 private:
 	float paddingWidth, paddingHeight;
-	WCHAR const* buttonText;
+	std::wstring buttonText;
 	ColorD baseColor, textColor;
 	ComPtr<IDWriteTextLayout> textLayout;
 	bool isTextDirty;

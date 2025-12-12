@@ -139,9 +139,11 @@
   <ItemGroup>
     <ClInclude Include="Common.h" />
     <ClInclude Include="GraphicsTypes.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="IClickable.h" />
     <ClInclude Include="IElement.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="tiny_object_loader.h" />
     <ClInclude Include="UIButton.h" />
     <ClInclude Include="UIManager.h" />
@@ -163,6 +165,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Project1.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,7 +2,7 @@
 
 UIButton::UIButton(RectD _area, ColorD _baseColor,
 	ColorD _textColor, float _pWidth,
-	float _pHeight, WCHAR const* _buttonText, RectD _clickableArea)
+	float _pHeight, std::wstring _buttonText, RectD _clickableArea)
 	: IElement(_area),
 	baseColor(_baseColor),
 	textColor(_textColor),
@@ -36,7 +36,7 @@ void UIButton::Draw(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush
 		//CreateTextLayout(dwriteFactory, buttonText, textFormat);
 		isTextDirty = false;
 		CreateTextLayout(dWriteFactory,
-			buttonText,
+			buttonText.c_str(),
 			textFormat
 			);
 	}

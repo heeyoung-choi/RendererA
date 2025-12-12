@@ -1,7 +1,7 @@
 #include "UIManager.h"
 
 void UIManager::CreateButton(RectD _area,
-	ColorD _baseColor, ColorD _textColor, float _pWidth, float _pHeight, WCHAR const* _buttonText, RectD _clickableArea)
+	ColorD _baseColor, ColorD _textColor, float _pWidth, float _pHeight, std::wstring _buttonText, RectD _clickableArea)
 {
 	elements.push_back(std::make_unique<UIButton>(
 		_area,

@@ -38,7 +38,7 @@ Window::Window(int width, int height)
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
 	renderer.InitD3D(hWnd, height, width);
-	InitUI();
+	InitUI(hWnd);
 }
 
 void Window::Render()
@@ -107,9 +107,9 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     return S_OK;
 }
 
-void Window::InitUI()
+void Window::InitUI(HWND hWnd)
 {
-    wchar_t const* m1 = L"Hello World";
+    wchar_t const* m1 = L"Choose file";
     auto mybutton = std::make_unique<UIButton>(
         RectD{ 300.0f, 50.0f, 500.0f, 150.0f },
         ColorD{ 0.8f, 0.2f, 0.2f, 1.0f },
@@ -118,12 +118,104 @@ void Window::InitUI()
         10.0f,
         m1,
 		RectD{ 300.0f, 50.0f, 500.0f, 150.0f });
+	RectD labelArea = RectD{ 100.0f, 50.0f, 300.0f, 150.0f };
+    auto debugLabel = std::make_unique<UIButton>(
+        labelArea,
+        ColorD{ 0.2f, 0.2f, 0.8f, 1.0f },
+        ColorD{ 1.0f, 1.0f, 1.0f, 1.0f },
+        10.0f,
+        10.0f,
+		L"Debug Label",
+        labelArea);
+	UIButton* debugLabelPtr = debugLabel.get();
     
 	UIButton* buttonPtr = mybutton.get();
-    mybutton->SetLeftMouseDownAction([buttonPtr]() {
-		buttonPtr->SetText(L"Clicked!");
+    mybutton->SetLeftMouseDownAction([debugLabelPtr, hWnd, this]() {
+		std::wstring filePath = OpenFileExplorer(hWnd);
+		std::string path = Helper::wstring_to_string(filePath);
+        std::replace(path.begin(), path.end(), '\\', '/');
+		std::filesystem::path pathObj(path);
+		std::string fileName = pathObj.filename().string();
+        std::string searchPath = pathObj.parent_path().string();
+        std::string extension = pathObj.extension().string();
+        if (!filePath.empty())
+        {
+            if (extension == ".obj")
+            {
+                HRESULT hr = renderer.InitGraphics(fileName, searchPath);
+                if (! hr == S_OK)
+                {
+                    debugLabelPtr->SetText(L"Failed to load model");
+                }
+                else
+                {
+                    debugLabelPtr->SetText(L"Loaded: " + Helper::string_to_wstring(fileName));
+                }
+            }
+            else
+            {
+				debugLabelPtr->SetText(L"Not an .obj file");
+            }
+
+             
+        }
+        else
+        {
+			debugLabelPtr->SetText(L"Filepath is empty");
+        }
 		});
 	uiManager.CreateButton(std::move(mybutton));
+    uiManager.CreateButton(std::move(debugLabel));
+
     // Use buffer...
    // free(buffer); // Remember to free when done
+}
+std::wstring OpenFileExplorer(HWND hWndOwner)
+{
+    // 1. Initialize COM Library (Required for all shell dialogs)
+    // COINIT_APARTMENTTHREADED is standard for UI threads.
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) return L"";
+
+    std::wstring filePath = L"";
+    IFileOpenDialog* pFileOpen = nullptr;
+
+    // 2. Create the FileOpenDialog object
+    hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
+        IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+
+    if (SUCCEEDED(hr))
+    {
+        // 3. Show the dialog
+        // This blocks execution until the user selects a file or cancels.
+        hr = pFileOpen->Show(hWndOwner);
+
+        // 4. Get the result
+        if (SUCCEEDED(hr))
+        {
+            IShellItem* pItem = nullptr;
+            hr = pFileOpen->GetResult(&pItem);
+            if (SUCCEEDED(hr))
+            {
+                PWSTR pszFilePath = nullptr;
+
+                // 5. Get the file path string from the item
+                hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+                // 6. Copy the string to our C++ string
+                if (SUCCEEDED(hr))
+                {
+                    filePath = pszFilePath;
+                    CoTaskMemFree(pszFilePath); // Clean up the raw string
+                }
+                pItem->Release();
+            }
+        }
+        pFileOpen->Release();
+    }
+
+    // 7. Uninitialize COM
+    CoUninitialize();
+
+    return filePath;
 }

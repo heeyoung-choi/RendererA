@@ -2,6 +2,10 @@
 #include <Windows.h>
 #include "Renderer.h"
 #include "UIManager.h"
+#include "Helper.h"
+#include <filesystem>
+#include <shobjidl.h> // Common Item Dialog API
+#include <string>
 class Window
 {
 public:
@@ -18,5 +22,7 @@ private:
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
-	void InitUI();
+	void InitUI(HWND hWnd);
 };
+
+std::wstring OpenFileExplorer(HWND hWndOwner);

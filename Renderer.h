@@ -33,7 +33,7 @@ private:
 	HRESULT InitPipeline(HWND hWnd, int width, int height);
 
 	// Helper to define vertices/indices and create buffers
-	HRESULT InitGraphics();
+	HRESULT InitGraphics(const std::string& fileName = "", const std::string& searchPath = "");
 
 	// Helper to compile and create shaders and input layout
 	HRESULT InitShaders();
