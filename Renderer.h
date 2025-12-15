@@ -19,7 +19,6 @@ using namespace DirectX;
 #pragma comment(lib, "d3d11.lib")
 class Renderer
 {
-friend class Window;
 public:
 	Renderer();
 	~Renderer()
@@ -27,13 +26,15 @@ public:
 		
 
 	}
-private:
 	HRESULT InitD3D(HWND hWnd, int height, int width);
+	// Helper to define vertices/indices and create buffers
+	HRESULT InitGraphics(const std::string& fileName = "", const std::string& searchPath = "");
+private:
+	
 	// Helper to set up Device, SwapChain, RTV, and Viewport
 	HRESULT InitPipeline(HWND hWnd, int width, int height);
 
-	// Helper to define vertices/indices and create buffers
-	HRESULT InitGraphics(const std::string& fileName = "", const std::string& searchPath = "");
+	
 
 	// Helper to compile and create shaders and input layout
 	HRESULT InitShaders();

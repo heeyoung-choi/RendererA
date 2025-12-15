@@ -1,7 +1,7 @@
 #include "Window.h"
 
 #include <exception>
-Window::Window(int width, int height)
+MyWindow::MyWindow(int width, int height)
 {
 
     //get a module handle
@@ -22,7 +22,7 @@ Window::Window(int width, int height)
     RECT wr = { 0, 0, width, height };
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 
-    HWND hWnd = CreateWindowEx(
+    hWnd = CreateWindowEx(
         0,
         "DirectXGameWindow",
         "My First DirectX 11 Game",
@@ -37,32 +37,48 @@ Window::Window(int width, int height)
     if (!hWnd) throw std::exception ("failed to create window");
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
-	renderer.InitD3D(hWnd, height, width);
-	InitUI(hWnd);
+	
 }
 
-void Window::Render()
+void MyWindow::Render()
 {
-	renderer.RenderFrame();
-
-	uiManager.DrawUI(renderer.g_pBackBufferRT.Get(), renderer.g_pBrushUIMain.Get(), renderer.g_pDWriteFactory.Get(), renderer.g_pTextFormat.Get());
-
-
-	renderer.Present();
 }
 
-LRESULT Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+std::optional<int> MyWindow::ProcessMessages()
+{
+    MSG msg;
+    // while queue has messages, remove and dispatch them (but do not block on empty queue)
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
+        // check for quit because peekmessage does not signal this via return val
+        if (msg.message == WM_QUIT)
+        {
+            // return optional wrapping int (arg to PostQuitMessage is in wparam) signals quit
+            return (int)msg.wParam;
+        }
+
+        // TranslateMessage will post auxilliary WM_CHAR messages from key msgs
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    // return empty optional when not quitting app
+    return {};
+
+}
+
+LRESULT MyWindow::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
     // use create parameter passed in from CreateWindow() to store window class pointer at WinAPI side
     if (msg == WM_NCCREATE)
     {
         // extract ptr to window class from creation data
         const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-        Window* const pWnd = static_cast<Window*>(pCreate->lpCreateParams);
+        MyWindow* const pWnd = static_cast<MyWindow*>(pCreate->lpCreateParams);
         // set WinAPI-managed user data to store ptr to window instance
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWnd));
         // set message proc to normal (non-setup) handler now that setup is finished
-        SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&Window::HandleMsgThunk));
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&MyWindow::HandleMsgThunk));
         // forward message to window instance handler
         return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
     }
@@ -70,15 +86,15 @@ LRESULT Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-LRESULT Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT MyWindow::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
     // retrieve ptr to window instance
-    Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    MyWindow* const pWnd = reinterpret_cast<MyWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     // forward message to window instance handler
     return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
 }
 
-LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT MyWindow::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
     switch (msg)
     {
@@ -107,66 +123,9 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     return S_OK;
 }
 
-void Window::InitUI(HWND hWnd)
+void MyWindow::InitUI(HWND hWnd)
 {
-    wchar_t const* m1 = L"Choose file";
-    auto mybutton = std::make_unique<UIButton>(
-        RectD{ 300.0f, 50.0f, 500.0f, 150.0f },
-        ColorD{ 0.8f, 0.2f, 0.2f, 1.0f },
-        ColorD{ 1.0f, 1.0f, 1.0f, 1.0f },
-        10.0f,
-        10.0f,
-        m1,
-		RectD{ 300.0f, 50.0f, 500.0f, 150.0f });
-	RectD labelArea = RectD{ 100.0f, 50.0f, 300.0f, 150.0f };
-    auto debugLabel = std::make_unique<UIButton>(
-        labelArea,
-        ColorD{ 0.2f, 0.2f, 0.8f, 1.0f },
-        ColorD{ 1.0f, 1.0f, 1.0f, 1.0f },
-        10.0f,
-        10.0f,
-		L"Debug Label",
-        labelArea);
-	UIButton* debugLabelPtr = debugLabel.get();
     
-	UIButton* buttonPtr = mybutton.get();
-    mybutton->SetLeftMouseDownAction([debugLabelPtr, hWnd, this]() {
-		std::wstring filePath = OpenFileExplorer(hWnd);
-		std::string path = Helper::wstring_to_string(filePath);
-        std::replace(path.begin(), path.end(), '\\', '/');
-		std::filesystem::path pathObj(path);
-		std::string fileName = pathObj.filename().string();
-        std::string searchPath = pathObj.parent_path().string();
-        std::string extension = pathObj.extension().string();
-        if (!filePath.empty())
-        {
-            if (extension == ".obj")
-            {
-                HRESULT hr = renderer.InitGraphics(path, searchPath);
-                if ( hr == S_OK)
-                {
-                    debugLabelPtr->SetText(L"Loaded: " + Helper::string_to_wstring(fileName));
-                }
-                else
-                {
-                    debugLabelPtr->SetText(L"Failed to load model");
-
-                }
-            }
-            else
-            {
-				debugLabelPtr->SetText(L"Not an .obj file");
-            }
-
-             
-        }
-        else
-        {
-			debugLabelPtr->SetText(L"Filepath is empty");
-        }
-		});
-	uiManager.CreateButton(std::move(mybutton));
-    uiManager.CreateButton(std::move(debugLabel));
 
     // Use buffer...
    // free(buffer); // Remember to free when done

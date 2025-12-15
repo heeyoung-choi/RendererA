@@ -132,6 +132,7 @@
     <ClCompile Include="IElement.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Rosa.cpp" />
     <ClCompile Include="UIButton.cpp" />
     <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -139,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="Common.h" />
     <ClInclude Include="GraphicsTypes.h" />
+    <ClInclude Include="Rosa.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="IClickable.h" />
     <ClInclude Include="IElement.h" />
