@@ -1,6 +1,8 @@
 #include "Rosa.h"
 
-int RosaEngine::Run()
+using namespace RosaEngine;
+
+int Application::Run()
 {
 	OnStart();
 	while (true)
@@ -15,28 +17,39 @@ int RosaEngine::Run()
 		// execute the game logic
 		//const auto dt = timer.Mark() * speed_factor;
 		OnUpdate(0.016f);
-		pWindow->Render();
+		pRenderer->RenderFrame();
+		pUIManager->DrawUI(pRenderer->GetBackBufferRT(),
+			pRenderer->GetBrushUIMain(),
+			pRenderer->GetDWriteFactory(),
+			pRenderer->GetTextFormat()
+            );
+        pRenderer->Present();
 	}
 }
 
-void RosaEngine::OnStart()
+void Application::OnStart()
 {
 }
 
-void RosaEngine::OnUpdate(float dt)
+void Application::OnUpdate(float dt)
 {
 }
 
-void RosaEngine::OnQuit()
+void Application::OnQuit()
 {
 }
 
-RosaEngine::RosaEngine(int _sWidth, int _sHeight)
+Application::Application(int _sWidth, int _sHeight)
 	: screenWidth(_sWidth), screenHeight(_sHeight)
 {
 	pWindow = std::make_unique<MyWindow>(screenWidth, screenHeight);
 	pRenderer = std::make_unique<Renderer>();
 	pUIManager = std::make_unique<UIManager>();
+	pMouse = std::make_unique<Mouse>();
+
+    pWindow->SetMouse(pMouse.get());
+	pMouse->SetUIManager(pUIManager.get());
+
 	pRenderer->InitD3D(pWindow->GetHwnd(), screenHeight, screenWidth);
 	//InitUI
 

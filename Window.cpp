@@ -1,7 +1,9 @@
 #include "Window.h"
 
 #include <exception>
+using namespace RosaEngine;
 MyWindow::MyWindow(int width, int height)
+    : pMouse(nullptr)
 {
 
     //get a module handle
@@ -40,9 +42,6 @@ MyWindow::MyWindow(int width, int height)
 	
 }
 
-void MyWindow::Render()
-{
-}
 
 std::optional<int> MyWindow::ProcessMessages()
 {
@@ -106,7 +105,10 @@ LRESULT MyWindow::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) n
             int mouseX = LOWORD(lParam);
             int mouseY = HIWORD(lParam);
             // Handle mouse movement, e.g., update UI elements
-			uiManager.HandleMouseMove(mouseX, mouseY);
+            if (pMouse)
+            {
+				pMouse->HandleMouseMove(mouseX, mouseY);
+            }
             break;
 		}
         case WM_LBUTTONDOWN:
@@ -114,7 +116,10 @@ LRESULT MyWindow::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) n
             int mouseX = LOWORD(lParam);
             int mouseY = HIWORD(lParam);
 			// Handle mouse button down, e.g., check if a UI element was clicked
-            uiManager.HandleMouseDown(mouseX, mouseY);
+            if (pMouse)
+            {
+				pMouse->HandleMouseDown(mouseX, mouseY);
+            }
 			break;
 		    }
         default:

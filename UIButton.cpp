@@ -1,4 +1,5 @@
 #include "UIButton.h"
+using namespace RosaEngine;
 
 UIButton::UIButton(RectD _area, ColorD _baseColor,
 	ColorD _textColor, float _pWidth,

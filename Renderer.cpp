@@ -1,5 +1,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "Renderer.h"
+
+
+using namespace RosaEngine;
+using namespace DirectX;
 Renderer::Renderer()
 {
 

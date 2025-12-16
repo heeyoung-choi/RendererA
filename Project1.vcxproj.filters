@@ -33,10 +33,10 @@
     <ClCompile Include="UIManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Rosa.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Rosa.cpp">
+    <ClCompile Include="Mouse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,9 +77,13 @@
     <ClInclude Include="Rosa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Project1.rc">

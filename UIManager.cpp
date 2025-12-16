@@ -1,4 +1,5 @@
 #include "UIManager.h"
+using namespace RosaEngine;
 
 void UIManager::CreateButton(RectD _area,
 	ColorD _baseColor, ColorD _textColor, float _pWidth, float _pHeight, std::wstring _buttonText, RectD _clickableArea)
