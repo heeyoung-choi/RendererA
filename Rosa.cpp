@@ -46,6 +46,11 @@ Application::Application(int _sWidth, int _sHeight)
 	pRenderer = std::make_unique<Renderer>();
 	pUIManager = std::make_unique<UIManager>();
 	pMouse = std::make_unique<Mouse>();
+    pRenderer->pMainCamera = std::make_unique<Camera>(
+        XMFLOAT3(0.0f, 0.0f, -5.0f),
+        XMFLOAT3(0.0f, 0.0f, 0.0f),
+        XMFLOAT3(0.0f, 1.0f, 0.0f)
+	);
 
     pWindow->SetMouse(pMouse.get());
 	pMouse->SetUIManager(pUIManager.get());

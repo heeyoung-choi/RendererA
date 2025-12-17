@@ -7,6 +7,10 @@ typedef D2D1_RECT_F RectD;
 #include <D3D9Types.h>
 typedef D2D1_COLOR_F ColorD;
 
+
+#include <directxmath.h>
+using DirectX::XMFLOAT3;
+
 #include <functional>
 typedef std::function<void()> Action;
 

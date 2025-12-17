@@ -328,7 +328,8 @@ void Renderer::RenderFrame()
 	// Eye: Where the camera is (0, 1, -2) -> Back 2 units, up 1 unit
 	// At:  What it is looking at (0, 0, 0) -> The center of the world
 	// Up:  Which way is "up" (0, 1, 0) -> Y-axis is up
-	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
+
+	XMVECTOR eye = XMLoadFloat3(&pMainCamera->position);
 	XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX view = XMMatrixLookAtLH(eye, at, up);

@@ -150,6 +150,7 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="GraphicsTypes.h" />
     <ClInclude Include="Mouse.h" />

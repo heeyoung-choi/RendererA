@@ -9,6 +9,7 @@
 #include "tiny_object_loader.h"
 
 #include "Common.h"
+#include "Camera.h"
 
 using RosaEngine::Vertex;
 
@@ -58,6 +59,7 @@ namespace RosaEngine
 		HRESULT DrawUI();
 		void DrawText();
 	private:
+
 		ComPtr<ID3D11Device> g_pDevice;        // The Resource Manager
 		ComPtr<ID3D11DeviceContext> g_pContext;       // The Artist]]]]]]]]]]p]
 		ComPtr<IDXGISwapChain> g_pSwapChain;     // The Double Buffer Manager
@@ -83,7 +85,10 @@ namespace RosaEngine
 		std::vector<Vertex> vertices;
 		std::vector<unsigned short> indices;
 
+	public:
+		std::unique_ptr<Camera> pMainCamera;
+
 
 
 	};
-}
+} 
